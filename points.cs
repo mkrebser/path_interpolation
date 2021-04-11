@@ -47,7 +47,7 @@ public static class Points
         float t_2 = t * t;
         float t_3 = t_2 * t;
 
-        position = smoothing ? 0.5f * (a0 + a1 * t + a2 * t_2 + a3 * t_3) : p1 * t + p2 * (1 - t); // if smoothing-> do catmull rom, otherwise do simple interpolation
+        position = smoothing ? 0.5f * (a0 + a1 * t + a2 * t_2 + a3 * t_3) : p1 * (1 - t) + p2 * t; // if smoothing-> do catmull rom, otherwise do simple interpolation
         direction = (smoothing ? 0.5f * (a1 + 2 * a2 * t + 3 * a3 * t_2) : p2 - p1).normalized; // if smoothing-> do derivative of catmull rom, otherwise just subtract
     }
 }
