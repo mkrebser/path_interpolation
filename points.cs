@@ -20,34 +20,36 @@ public static class Points
     {
         // A good reference guide for catmull rom spline https://www.mvps.org/directx/articles/catmull/
 
-        count = count < 0 ? points.Length : count;
+		count = count < 0 ? points.Length : count;
 
-        if (count < 2)
-            throw new System.Exception("Error, must use atleast 2 points!");
+		if (count < 2)
+			throw new System.Exception("Error, must use atleast 2 points!");
 
-        int index_p0 = index - 1 < 0 ? (loop ? count - 1 : index) : index - 1; // indices of 4 points needed for catmull rom
-        int index_p1 = index;
-        int index_p2 = index + 1 >= count ? (loop ? 0 : index) : index + 1;
-        int index_p3 = index_p2 + 1 >= count ? (loop ? 0 : index_p2) : index_p2 + 1;
+		int index_p0 = index - 1 < 0 ? (loop ? count - 1 : index) : index - 1; // indices of 4 points needed for catmull rom
+		int index_p1 = index;
+		int index_p2 = index + 1 >= count ? (loop ? 0 : index) : index + 1;
+		int index_p3 = index_p2 + 1 >= count ? (loop ? 0 : index_p2) : index_p2 + 1;
 
-        int index_p0m1 = index_p0 - 1 < 0 ? (loop ? count - 1 : index_p0) : index_p0 - 1; // extra indices used for the weighted sum
-        int index_p3p1 = index_p3 + 1 >= count ? (loop ? 0 : index_p3) : index_p3 + 1;
+		int index_p0m1 = index_p0 - 1 < 0 ? (loop ? count - 1 : index_p0) : index_p0 - 1; // extra indices used for the weighted sum
+		int index_p3p1 = index_p3 + 1 >= count ? (loop ? 0 : index_p3) : index_p3 + 1;
 
-        float avg_weight2 = (1 - avg_weight) * 0.5f; // 'Averaging', if enabled, does a weighted sum of the desired point and its left & right neighbors.
-        Vector3 p0 = average ? (points[start_index + index_p0m1] + points[start_index + index_p1]) * avg_weight2 + points[start_index + index_p0] * avg_weight : points[start_index + index_p0];
-        Vector3 p1 = average ? (points[start_index + index_p0] + points[start_index + index_p2]) * avg_weight2 + points[start_index + index_p1] * avg_weight : points[start_index + index_p1];
-        Vector3 p2 = average ? (points[start_index + index_p1] + points[start_index + index_p3]) * avg_weight2 + points[start_index + index_p2] * avg_weight : points[start_index + index_p2];
-        Vector3 p3 = average ? (points[start_index + index_p2] + points[start_index + index_p3p1]) * avg_weight2 + points[start_index + index_p3] * avg_weight : points[start_index + index_p3];
+		float avg_weight2 = (1 - avg_weight) * 0.5f; // 'Averaging', if enabled, does a weighted sum of the desired point and its left & right neighbors.
+		bool move_pt = average && (loop || (index != 0));
+		bool move_next_pt = average && (loop || index_p2 < count - 1);
+		Vector3 p0 = average                 ? (points[start_index + index_p0m1] + points[start_index + index_p1]) * avg_weight2 + points[start_index + index_p0] * avg_weight : points[start_index + index_p0];
+		Vector3 p1 = average && move_pt      ? (points[start_index + index_p0]   + points[start_index + index_p2]) * avg_weight2 + points[start_index + index_p1] * avg_weight : points[start_index + index_p1];
+		Vector3 p2 = average && move_next_pt ? (points[start_index + index_p1]   + points[start_index + index_p3]) * avg_weight2 + points[start_index + index_p2] * avg_weight : points[start_index + index_p2];
+		Vector3 p3 = average                 ? (points[start_index + index_p2] + points[start_index + index_p3p1]) * avg_weight2 + points[start_index + index_p3] * avg_weight : points[start_index + index_p3];
 
-        Vector3 a0 = 2 * p1;
-        Vector3 a1 = p2 - p0;
-        Vector3 a2 = 2 * p0 - 5 * p1 + 4 * p2 - p3;
-        Vector3 a3 = 3 * p1 - 3 * p2 + p3 - p0;
+		Vector3 a0 = 2 * p1;
+		Vector3 a1 = p2 - p0;
+		Vector3 a2 = 2 * p0 - 5 * p1 + 4 * p2 - p3;
+		Vector3 a3 = 3 * p1 - 3 * p2 + p3 - p0;
 
-        float t_2 = t * t;
-        float t_3 = t_2 * t;
+		float t_2 = t * t;
+		float t_3 = t_2 * t;
 
-        position = smoothing ? 0.5f * (a0 + a1 * t + a2 * t_2 + a3 * t_3) : p1 * t + p2 * (1 - t); // if smoothing-> do catmull rom, otherwise do simple interpolation
-        direction = (smoothing ? 0.5f * (a1 + 2 * a2 * t + 3 * a3 * t_2) : p2 - p1).normalized; // if smoothing-> do derivative of catmull rom, otherwise just subtract
+		position = smoothing ? 0.5f * (a0 + a1 * t + a2 * t_2 + a3 * t_3) : p1 * (1-t) + p2 * t; // if smoothing-> do catmull rom, otherwise do simple interpolation
+		direction = (smoothing ? 0.5f * (a1 + 2 * a2 * t + 3 * a3 * t_2) : p2 - p1).normalized; // if smoothing-> do derivative of catmull rom, otherwise just subtract
     }
 }
